@@ -1,0 +1,24 @@
+# Raw email datasets
+data/raw/
+
+# Generated datasets
+data/emails_clean.csv
+data/processed/*.csv
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment variables
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.log
+.DS_Store
