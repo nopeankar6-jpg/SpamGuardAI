@@ -1,0 +1,23 @@
+{
+  "n_train": 2312,
+  "n_test": 578,
+  "label_distribution_train": {
+    "ham": 1926,
+    "spam": 386
+  },
+  "label_distribution_test": {
+    "ham": 482,
+    "spam": 96
+  },
+  "random_state": 42,
+  "nb": {
+    "model_path": "models\\naive_bayes.pkl",
+    "tfidf_max_features": 30000,
+    "n_features_actual": 30000
+  },
+  "svm": {
+    "model_path": "models\\svm.pkl",
+    "tfidf_max_features": 30000,
+    "n_features_actual": 30000
+  }
+}

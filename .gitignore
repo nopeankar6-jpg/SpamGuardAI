@@ -3,7 +3,7 @@ data/raw/*
 !data/raw/.gitkeep
 
 # Generated datasets
-data/emails_clean.csv
+#data/emails_clean.csv
 data/processed/*.csv
 
 # Python
@@ -23,3 +23,5 @@ venv/
 # Temporary files
 *.log
 .DS_Store
+quick_eval.py
+test_manual.py
