@@ -1,0 +1,41 @@
+{
+  "source": "Apache SpamAssassin Public Corpus",
+  "archives": [
+    {
+      "filename": "20021010_easy_ham.tar.bz2",
+      "label": "ham",
+      "members_seen": 2551,
+      "valid_emails": 2551,
+      "skipped_empty": 0,
+      "skipped_error": 0
+    },
+    {
+      "filename": "20030228_spam.tar.bz2",
+      "label": "spam",
+      "members_seen": 501,
+      "valid_emails": 501,
+      "skipped_empty": 0,
+      "skipped_error": 0
+    }
+  ],
+  "valid_before_dedup": 3052,
+  "contradictory_unique_texts": 0,
+  "contradictory_rows_removed": 0,
+  "duplicates_removed": 162,
+  "total_removed_after_parsing": 162,
+  "total_after_cleaning": 2890,
+  "labels_after_cleaning": {
+    "ham": 2408,
+    "spam": 482
+  },
+  "empty_subject": 3,
+  "empty_body": 3,
+  "empty_text": 0,
+  "source_term_diagnostics": {
+    "spam_term_by_label": {
+      "ham": 233,
+      "spam": 30
+    },
+    "razor_term_in_ham": 101
+  }
+}
