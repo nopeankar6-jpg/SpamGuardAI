@@ -69,7 +69,21 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 SV2 phải fit TF-IDF trên train *sau khi chia*, và báo cáo recall/F1 của lớp spam. Không có phần huấn luyện mô hình trong gói SV1 này.
 
-## 5. Kiểm thử riêng mà không cần email thật
+## 5. Chạy giao diện Web (Streamlit - SV3)
+
+Sau khi SV2 huấn luyện và tạo ra các file mô hình trong thư mục `models/` (`naive_bayes.pkl` và `svm.pkl`), khởi chạy ứng dụng web bằng lệnh:
+
+```bash
+python -m streamlit run app.py
+```
+
+Trình duyệt sẽ tự động mở tại địa chỉ `http://localhost:8501`.
+
+Các tính năng trên giao diện:
+- **Phân loại đơn lẻ:** Nhập Tiêu đề (Subject) và Nội dung (Body) email, chọn mô hình (Naive Bayes hoặc SVM), bấm **Phân loại** để nhận diện `Spam` hoặc `Ham`.
+- **Phân loại hàng loạt:** Tải lên tệp CSV (yêu cầu cột `text` hoặc cặp cột `subject` và `body`), xem trước dữ liệu, phân loại toàn bộ và tải về tệp kết quả CSV kèm biểu đồ thống kê.
+
+## 6. Kiểm thử riêng mà không cần email thật
 
 ```bash
 python -m unittest discover -s tests -v
@@ -77,6 +91,6 @@ python -m unittest discover -s tests -v
 
 Bài test tự tạo corpus nhỏ trong thư mục tạm (không dùng tài liệu thực) để kiểm tra đọc `_tar.bz2`, loại trùng, nhãn mâu thuẫn, `extract_email()` và CSV.
 
-## 6. Giới hạn
+## 7. Giới hạn
 
 Hai file email gốc **không nằm trong gói mã nguồn**. Xem `DATA_SOURCE.md` để biết nguồn, thông tin bản quyền, hạn chế lệch nguồn/nhãn và thống kê chạy thử mà nhóm cung cấp.
