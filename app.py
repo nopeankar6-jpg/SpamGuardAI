@@ -69,6 +69,60 @@ st.markdown("""
         line-height: 1.25;
         margin: 1.1rem 0 1rem;
     }
+    .session-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-rows: repeat(2, minmax(4.5rem, auto));
+        gap: 0.65rem;
+        margin: 0.45rem 0 1rem;
+    }
+    .session-stat {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 0;
+        padding: 0.65rem 0.8rem;
+        background: #151e2c;
+        border: 1px solid #263244;
+        border-radius: 8px;
+        transition: transform 180ms ease, border-color 180ms ease;
+    }
+    .session-stat:hover {
+        transform: translateY(-2px);
+        border-color: #47627f;
+    }
+    .session-stat-total {
+        grid-column: 1;
+        grid-row: span 2;
+    }
+    .session-stat-nb-spam {
+        grid-column: 2;
+        grid-row: 1;
+    }
+    .session-stat-nb-ham {
+        grid-column: 2;
+        grid-row: 2;
+    }
+    .session-stat-svm-spam {
+        grid-column: 3;
+        grid-row: 1;
+    }
+    .session-stat-svm-ham {
+        grid-column: 3;
+        grid-row: 2;
+    }
+    .session-stat-label {
+        color: #9aa8bb;
+        font-size: 0.78rem;
+        line-height: 1.25;
+    }
+    .session-stat-value {
+        color: #f3f6fb;
+        font-size: 1.35rem;
+        font-weight: 650;
+        line-height: 1.25;
+        margin-top: 0.3rem;
+    }
     .result-spam {
         background: #241719;
         border: 1px solid #69353b;
@@ -186,6 +240,13 @@ def select_batch_session(session_id):
     st.session_state.selected_batch_session_id = session_id
 
 
+def toggle_dashboard_distribution_model():
+    current_model = st.session_state.dashboard_distribution_model
+    st.session_state.dashboard_distribution_model = (
+        "SVM" if current_model == "Naive Bayes" else "Naive Bayes"
+    )
+
+
 def prediction_style(label):
     normalized_label = str(label).strip().lower()
     if normalized_label == "ham":
@@ -265,7 +326,7 @@ def render_metrics_comparison(df):
         metric_table,
         use_container_width=True,
         hide_index=True,
-        height=225,
+        height=180,
         column_config={
             "Chỉ số": st.column_config.TextColumn(width="medium"),
             "NB": st.column_config.TextColumn(width="small"),
@@ -281,13 +342,68 @@ def render_metrics_comparison(df):
         st.caption("Thêm cột `label` với nhãn `spam` hoặc `ham` để tính điểm.")
 
 
-def render_prediction_distribution(df):
-    prediction_values = pd.concat(
-        [df[model_name].astype(str).str.strip().str.lower() for model_name in MODEL_OPTIONS],
-        ignore_index=True,
+def get_prediction_counts(df, model_name):
+    if model_name not in df.columns:
+        return 0, 0
+    predictions = df[model_name].astype(str).str.strip().str.lower()
+    return int(predictions.eq("spam").sum()), int(predictions.eq("ham").sum())
+
+
+def render_session_statistics(df):
+    stat_items = [("Tổng email", len(df), "session-stat-total")]
+    model_counts = {}
+    for model_name, short_name in (("Naive Bayes", "NB"), ("SVM", "SVM")):
+        spam_count, ham_count = get_prediction_counts(df, model_name)
+        classified_count = spam_count + ham_count
+        model_counts[model_name] = classified_count
+        spam_rate = spam_count / classified_count if classified_count else 0
+        ham_rate = ham_count / classified_count if classified_count else 0
+        model_class = "nb" if short_name == "NB" else "svm"
+        stat_items.extend(
+            [
+                (
+                    f"{short_name} · Spam ({spam_rate:.1%})",
+                    spam_count,
+                    f"session-stat-{model_class}-spam",
+                ),
+                (
+                    f"{short_name} · Ham ({ham_rate:.1%})",
+                    ham_count,
+                    f"session-stat-{model_class}-ham",
+                ),
+            ]
+        )
+    cards = "".join(
+        f'<div class="session-stat {css_class}">'
+        f'<div class="session-stat-label">{label}</div>'
+        f'<div class="session-stat-value">{value}</div>'
+        "</div>"
+        for label, value, css_class in stat_items
+    )
+    st.markdown(
+        f'<div class="session-stat-grid">{cards}</div>',
+        unsafe_allow_html=True,
+    )
+    if any(count < len(df) for count in model_counts.values()):
+        st.caption(
+            "Email không có dự đoán Spam/Ham hợp lệ không được tính vào tỷ lệ. "
+            f"NB: {model_counts['Naive Bayes']}/{len(df)}; "
+            f"SVM: {model_counts['SVM']}/{len(df)} dự đoán hợp lệ."
+        )
+
+
+def render_prediction_distribution(df, model_name):
+    prediction_values = (
+        df[model_name].astype(str).str.strip().str.lower()
+        if model_name in df.columns
+        else pd.Series(dtype=str)
     )
     prediction_counts = prediction_values[prediction_values.isin(["ham", "spam"])].value_counts()
     total_predictions = int(prediction_counts.sum())
+    if not total_predictions:
+        st.info("Phiên này chưa có dự đoán hợp lệ để hiển thị.", icon=None)
+        return
+
     distribution = pd.DataFrame(
         [
             {
@@ -298,9 +414,6 @@ def render_prediction_distribution(df):
             for label in ("ham", "spam")
         ]
     )
-    if not total_predictions:
-        st.info("Phiên này chưa có dự đoán hợp lệ để hiển thị.", icon=None)
-        return
 
     base = alt.Chart(distribution).encode(
         theta=alt.Theta("Số lượng:Q", stack=True),
@@ -308,9 +421,9 @@ def render_prediction_distribution(df):
             "Nhãn:N",
             scale=alt.Scale(
                 domain=["Ham", "Spam"],
-                range=["#5797F5", "#6CC47D"],
+                range=["#6CC47D", "#e8757d"],
             ),
-            legend=alt.Legend(title=None, orient="bottom", labelFontSize=15),
+            legend=None,
         ),
         tooltip=[
             "Nhãn:N",
@@ -318,21 +431,19 @@ def render_prediction_distribution(df):
             alt.Tooltip("Tỷ lệ:Q", format=".1%"),
         ],
     )
-    arcs = base.mark_arc(innerRadius=68, outerRadius=116)
+    arcs = base.mark_arc(innerRadius=76, outerRadius=128)
     percentage_labels = base.mark_text(
-        radius=138,
+        radius=152,
         color="#e7edf5",
-        fontSize=14,
+        fontSize=15,
         fontWeight="bold",
-    ).encode(text=alt.Text("Tỷ lệ:Q", format=".0%"))
+    ).encode(text=alt.Text("Tỷ lệ:Q", format=".1%"))
     chart = (
         (arcs + percentage_labels)
-        .properties(height=330, background="transparent")
+        .properties(height=360, background="transparent")
         .configure_view(stroke=None)
-        .configure_legend(symbolSize=140)
     )
     st.altair_chart(chart, use_container_width=True)
-    st.caption("Tổng hợp dự đoán từ Naive Bayes và SVM.")
 
 
 def render_batch_results():
@@ -398,6 +509,8 @@ if "batch_sessions" not in st.session_state:
 if "selected_batch_session_id" not in st.session_state:
     sessions = st.session_state.batch_sessions
     st.session_state.selected_batch_session_id = sessions[-1]["id"] if sessions else None
+if "dashboard_distribution_model" not in st.session_state:
+    st.session_state.dashboard_distribution_model = "Naive Bayes"
 
 # ────────────────────────── Sidebar ──────────────────────────────────────
 with st.sidebar:
@@ -462,9 +575,32 @@ if st.session_state.active_page == "Dashboard":
         )
         distribution_column, metrics_column = st.columns([1, 1])
         with distribution_column:
-            st.markdown("#### Phân bố dự đoán Spam/Ham")
-            render_prediction_distribution(session_df)
+            st.markdown("#### Phân bố dự đoán")
+            model_switch_column, _ = st.columns([1, 2])
+            with model_switch_column:
+                st.button(
+                    st.session_state.dashboard_distribution_model,
+                    key="toggle_dashboard_distribution",
+                    on_click=toggle_dashboard_distribution_model,
+                    use_container_width=True,
+                )
+            render_prediction_distribution(
+                session_df, st.session_state.dashboard_distribution_model
+            )
+            st.markdown(
+                """
+                <div style="display:flex;justify-content:center;gap:1rem;
+                            color:#c8d2df;font-size:0.95rem;font-weight:600;
+                            margin-top:-0.5rem">
+                    <span><span style="color:#6CC47D">●</span> Ham</span>
+                    <span><span style="color:#e8757d">●</span> Spam</span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
         with metrics_column:
+            st.markdown("#### Thống kê theo NB và SVM")
+            render_session_statistics(session_df)
             st.markdown("#### So sánh NB và SVM")
             render_metrics_comparison(session_df)
 
