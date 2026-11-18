@@ -21,6 +21,31 @@ def _load(model_name: str):
         _cache[model_name] = joblib.load(path)
     return _cache[model_name]
 
+def _is_likely_english_word(word: str) -> bool:
+    """
+    Heuristic kiểm tra một từ có giống từ tiếng Anh không.
+    Dựa trên tỷ lệ nguyên âm hợp lý và không có chuỗi phụ âm quá dài.
+    """
+    w = re.sub(r'[^a-zA-Z]', '', word).lower()
+    if not w:
+        return False
+    # Từ 1-2 ký tự: cho qua (a, I, an, to, ...)
+    if len(w) <= 2:
+        return True
+    # Kiểm tra tỷ lệ nguyên âm (tiếng Anh thường 30-50%)
+    vowels = sum(1 for c in w if c in 'aeiouy')
+    vowel_ratio = vowels / len(w)
+    if vowel_ratio < 0.15 or vowel_ratio > 0.85:
+        return False
+    # Kiểm tra chuỗi phụ âm liên tiếp quá dài (>4 rất hiếm trong tiếng Anh)
+    if re.search(r'[^aeiouy]{5,}', w):
+        return False
+    # Kiểm tra chuỗi nguyên âm liên tiếp quá dài (>3 rất hiếm)
+    if re.search(r'[aeiouy]{4,}', w):
+        return False
+    return True
+
+
 def is_valid_input(text: str) -> bool:
     """
     Kiểm tra xem văn bản có đủ ý nghĩa để phân loại không.
@@ -43,6 +68,13 @@ def is_valid_input(text: str) -> bool:
     invalid_chars = re.findall(fr'[^\x00-\x7F{allowed_punctuation}]', text)
     if len(invalid_chars) > 0:
         return False
+
+    # Kiểm tra tỷ lệ từ giống tiếng Anh — chặn text rác kiểu "sdasdfasdfasd"
+    alpha_words = [w for w in words if re.search(r'[a-zA-Z]', w)]
+    if alpha_words:
+        english_count = sum(1 for w in alpha_words if _is_likely_english_word(w))
+        if english_count / len(alpha_words) < 0.5:
+            return False
         
     return True
 
