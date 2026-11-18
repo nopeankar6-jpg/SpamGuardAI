@@ -18,6 +18,9 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+if "color_mode" not in st.session_state:
+    st.session_state.color_mode = "dark"
+
 # ──────────────────────────── CSS tuỳ chỉnh ─────────────────────────────
 st.markdown("""
 <style>
@@ -196,6 +199,151 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+if st.session_state.color_mode == "light":
+    st.markdown("""
+    <style>
+        .stApp,
+        [data-testid="stAppViewContainer"],
+        [data-testid="stMain"] {
+            background: #f5f7fb;
+            color: #172033;
+        }
+        [data-testid="stHeader"] {
+            background: rgba(245, 247, 251, 0.9);
+        }
+        [data-testid="stSidebar"] {
+            background: #ffffff;
+            border-right-color: #d7deea;
+        }
+        [data-testid="stSidebar"] button[aria-label="Collapse sidebar"],
+        button[data-testid="stExpandSidebarButton"] {
+            background: #e2e8f0 !important;
+            border: 1px solid #94a3b8 !important;
+            color: #172033 !important;
+        }
+        [data-testid="stSidebar"] button[aria-label="Collapse sidebar"] [data-testid="stIconMaterial"],
+        button[data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"] {
+            color: #172033 !important;
+        }
+        [data-testid="stSidebar"] button[aria-label="Collapse sidebar"]:hover,
+        button[data-testid="stExpandSidebarButton"]:hover {
+            background: #cbd5e1 !important;
+            border-color: #64748b !important;
+            color: #0f172a !important;
+        }
+        [data-testid="stSidebar"] button[aria-label="Collapse sidebar"]:hover [data-testid="stIconMaterial"],
+        button[data-testid="stExpandSidebarButton"]:hover [data-testid="stIconMaterial"] {
+            color: #0f172a !important;
+        }
+        .sidebar-brand-title,
+        .session-heading,
+        .session-stat-value,
+        .stApp h1, .stApp h2, .stApp h3, .stApp h4,
+        [data-testid="stMarkdownContainer"],
+        [data-testid="stWidgetLabel"],
+        [data-testid="stSidebar"] label {
+            color: #172033;
+        }
+        .sidebar-brand-description,
+        .session-stat-label,
+        [data-testid="stCaptionContainer"],
+        [data-testid="stMetricLabel"] p {
+            color: #526176;
+        }
+        .session-stat,
+        [data-testid="stMetric"] {
+            background: #ffffff;
+            border-color: #d7deea;
+        }
+        .result-spam {
+            background: #fff1f1;
+            border-color: #e7a9ac;
+            border-left-color: #b4232f;
+        }
+        .result-ham {
+            background: #ecf8f1;
+            border-color: #9ac9ad;
+            border-left-color: #177245;
+        }
+        .result-desc {
+            color: #475569;
+        }
+        .stApp [data-testid="stAlert"] [data-testid="stMarkdownContainer"],
+        .stApp [data-testid="stAlert"] [data-testid="stMarkdownContainer"] * {
+            color: #f3f6fb !important;
+        }
+        [data-testid="stSidebar"] button,
+        button[data-testid="stBaseButton-secondary"],
+        button[data-testid="stBaseButton"] {
+            background: #eef2f7;
+            border-color: #cbd5e1;
+            color: #172033;
+        }
+        [data-testid="stSidebar"] button:hover,
+        button[data-testid="stBaseButton-secondary"]:hover,
+        button[data-testid="stBaseButton"]:hover {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+            color: #172033;
+        }
+        button[data-testid="stBaseButton-primary"] {
+            background: #216548;
+            border-color: #216548;
+            color: #ffffff;
+            box-shadow: inset 3px 0 #83d2aa;
+        }
+        button[data-testid="stBaseButton-primary"] [data-testid="stMarkdownContainer"] {
+            color: #ffffff;
+        }
+        button[data-testid="stBaseButton-primary"]:hover {
+            background: #18563b;
+            border-color: #18563b;
+            color: #ffffff;
+        }
+        [data-baseweb="input"] > div,
+        [data-baseweb="select"] > div,
+        [data-testid="stTextInput"] input,
+        [data-testid="stTextArea"] textarea {
+            background: #ffffff;
+            color: #172033;
+            border-color: #aab6c5;
+        }
+        [data-testid="stTextInput"] input::placeholder,
+        [data-testid="stTextArea"] textarea::placeholder {
+            color: #66758a;
+            opacity: 1;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <style>
+        .stApp,
+        [data-testid="stMarkdownContainer"],
+        [data-testid="stWidgetLabel"],
+        [data-testid="stSidebar"] label {
+            color: #e7edf5;
+        }
+        [data-testid="stCaptionContainer"],
+        [data-testid="stMetricLabel"] p {
+            color: #aab6c6;
+        }
+        [data-baseweb="input"] > div,
+        [data-baseweb="select"] > div,
+        [data-testid="stTextInput"] input,
+        [data-testid="stTextArea"] textarea {
+            background: #151e2c;
+            color: #e7edf5;
+            border-color: #526176;
+        }
+        [data-testid="stTextInput"] input::placeholder,
+        [data-testid="stTextArea"] textarea::placeholder {
+            color: #aab6c6;
+            opacity: 1;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
 
 # ───────────────────── Kiểm tra mô hình tồn tại ────────────────────────
 def check_model_exists(model_name: str) -> bool:
@@ -238,6 +386,12 @@ def start_new_batch():
 
 def select_batch_session(session_id):
     st.session_state.selected_batch_session_id = session_id
+
+
+def toggle_color_mode():
+    st.session_state.color_mode = (
+        "light" if st.session_state.color_mode == "dark" else "dark"
+    )
 
 
 def toggle_dashboard_distribution_model():
@@ -434,7 +588,7 @@ def render_prediction_distribution(df, model_name):
     arcs = base.mark_arc(innerRadius=76, outerRadius=128)
     percentage_labels = base.mark_text(
         radius=152,
-        color="#e7edf5",
+        color="#172033" if st.session_state.color_mode == "light" else "#e7edf5",
         fontSize=15,
         fontWeight="bold",
     ).encode(text=alt.Text("Tỷ lệ:Q", format=".1%"))
@@ -477,7 +631,10 @@ def render_result(label: str, model_display: str):
     css_class = "result-spam" if is_spam else "result-ham"
     desc = "Email này được nhận diện là **thư rác (spam)**." if is_spam \
         else "Email này được nhận diện là **thư hợp lệ (Ham)**."
-    color = "#ed6a70" if is_spam else "#59bd91"
+    if st.session_state.color_mode == "light":
+        color = "#b4232f" if is_spam else "#177245"
+    else:
+        color = "#ed6a70" if is_spam else "#59bd91"
 
     st.markdown(f"""
     <div class="{css_class}">
@@ -531,6 +688,14 @@ with st.sidebar:
         label_visibility="collapsed",
         key="active_page",
     )
+    mode_label = (
+        "☀️ Chế độ sáng"
+        if st.session_state.color_mode == "dark"
+        else "🌙 Chế độ tối"
+    )
+    if st.button(mode_label, use_container_width=True, key="toggle_color_mode"):
+        toggle_color_mode()
+        st.rerun()
     st.divider()
     st.caption("SpamGuard AI © 2026 — Bài tập nhóm TTNTTM")
 
@@ -588,9 +753,10 @@ if st.session_state.active_page == "Dashboard":
                 session_df, st.session_state.dashboard_distribution_model
             )
             st.markdown(
-                """
+                f"""
                 <div style="display:flex;justify-content:center;gap:1rem;
-                            color:#c8d2df;font-size:0.95rem;font-weight:600;
+                            color:{'#526176' if st.session_state.color_mode == 'light' else '#c8d2df'};
+                            font-size:0.95rem;font-weight:600;
                             margin-top:-0.5rem">
                     <span><span style="color:#6CC47D">●</span> Ham</span>
                     <span><span style="color:#e8757d">●</span> Spam</span>
