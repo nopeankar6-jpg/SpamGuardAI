@@ -56,7 +56,12 @@ def predict_email(text: str, model_name: str = "nb") -> str:
         
     model = _load(model_name)
     return str(model.predict([text])[0])
+
 def predict_email_from_parts(subject: str, body: str, model_name: str = "nb") -> str:
+    """
+    Dự đoán từ subject + body (dùng cho app Streamlit).
+    Dùng prepare_input của SV1 để ghép chuẩn — KHÔNG tự nối chuỗi thủ công.
+    """
     if not (subject or "").strip() and not (body or "").strip():
         raise ValueError("Vui lòng nhập tiêu đề hoặc nội dung email.")
         
@@ -66,7 +71,10 @@ def predict_email_from_parts(subject: str, body: str, model_name: str = "nb") ->
         return "unknown"        
         
     return predict_email(text, model_name)
+
+
 if __name__ == "__main__":
+
     spam_subject = "Congratulations! You WON a FREE iPhone 15"
     spam_body    = "Click here NOW to claim your prize: http://bit.ly/xyz"
     
