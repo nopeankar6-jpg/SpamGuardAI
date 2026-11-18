@@ -142,6 +142,14 @@ st.markdown("""
         border-radius: 6px;
         margin: 0.5rem 0;
     }
+    .result-unknown {
+        background: #20232a;
+        border: 1px solid #4b5563;
+        border-left: 4px solid #9aa8bb;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        margin: 0.5rem 0;
+    }
     .result-label {
         font-size: 1.25rem;
         font-weight: 700;
@@ -265,6 +273,11 @@ if st.session_state.color_mode == "light":
             border-color: #9ac9ad;
             border-left-color: #177245;
         }
+        .result-unknown {
+            background: #f1f3f5;
+            border-color: #cbd2d9;
+            border-left-color: #687385;
+        }
         .result-desc {
             color: #475569;
         }
@@ -376,9 +389,6 @@ def get_predict_email_function():
 
 
 MODEL_OPTIONS = {"Naive Bayes": "nb", "SVM": "svm"}
-UNKNOWN_RESULT_MESSAGE = (
-    "Nội dung quá ngắn hoặc không hợp lệ, không đủ cơ sở phân loại."
-)
 
 
 def start_new_batch():
@@ -630,15 +640,18 @@ def render_batch_results():
 # ──────────────────── Hàm hiển thị kết quả ──────────────────────────────
 def render_result(label: str, model_display: str):
     """Hiển thị kết quả phân loại với giao diện đẹp."""
-    if label.strip().lower() == "unknown":
-        st.warning(UNKNOWN_RESULT_MESSAGE, icon=None)
-        return
-
-    is_spam = label.lower() == "spam"
-    css_class = "result-spam" if is_spam else "result-ham"
-    desc = "Email này được nhận diện là **thư rác (spam)**." if is_spam \
-        else "Email này được nhận diện là **thư hợp lệ (Ham)**."
-    if st.session_state.color_mode == "light":
+    normalized_label = label.strip().lower()
+    is_unknown = normalized_label == "unknown"
+    is_spam = normalized_label == "spam"
+    desc = "Email này được nhận diện là **thư rác (spam)**."
+    css_class = (
+        "result-unknown" if is_unknown
+        else "result-spam" if is_spam
+        else "result-ham"
+    )
+    if is_unknown:
+        color = "#687385" if st.session_state.color_mode == "light" else "#9aa8bb"
+    elif st.session_state.color_mode == "light":
         color = "#b4232f" if is_spam else "#177245"
     else:
         color = "#ed6a70" if is_spam else "#59bd91"
@@ -649,10 +662,15 @@ def render_result(label: str, model_display: str):
         <p class="result-desc">Mô hình: {model_display}</p>
     </div>
     """, unsafe_allow_html=True)
-    if is_spam:
+    if is_unknown:
+        st.warning(
+            "Nội dung quá ngắn hoặc không hợp lệ, không đủ cơ sở phân loại",
+            icon=None,
+        )
+    elif is_spam:
         st.warning(desc, icon=None)
     else:
-        st.success(desc, icon=None)
+        st.success("Email này được nhận diện là **thư hợp lệ (Ham)**.", icon=None)
 
 
 # ═══════════════════════════ GIAO DIỆN CHÍNH ═════════════════════════════
@@ -792,11 +810,6 @@ if st.session_state.active_page == "Dashboard":
 # ========================= TAB 1: PHÂN LOẠI ĐƠN LẺ =======================
 elif st.session_state.active_page == "Phân loại đơn lẻ":
     st.subheader("Nhập nội dung email cần kiểm tra")
-    st.info(
-        "Hệ thống chỉ hỗ trợ phân loại email tiếng Anh. "
-        "Nội dung tiếng Việt hoặc quá ngắn sẽ được đánh dấu không đủ cơ sở phân loại.",
-        icon=None,
-    )
 
     subject_col, body_col = st.columns([1, 1])
     with subject_col:
@@ -835,18 +848,12 @@ elif st.session_state.active_page == "Phân loại đơn lẻ":
                             model_name: predict_fn(subject, body, model_key)
                             for model_name, model_key in MODEL_OPTIONS.items()
                         }
-                    if all(
-                        str(prediction).strip().lower() == "unknown"
-                        for prediction in predictions.values()
+                    result_columns = st.columns(2)
+                    for column, (model_name, prediction) in zip(
+                        result_columns, predictions.items()
                     ):
-                        st.warning(UNKNOWN_RESULT_MESSAGE, icon=None)
-                    else:
-                        result_columns = st.columns(2)
-                        for column, (model_name, prediction) in zip(
-                            result_columns, predictions.items()
-                        ):
-                            with column:
-                                render_result(prediction, model_name)
+                        with column:
+                            render_result(prediction, model_name)
                 except ValueError as ve:
                     st.error(f"Lỗi đầu vào: {ve}", icon=None)
                 except FileNotFoundError as fe:
@@ -877,8 +884,7 @@ elif st.session_state.active_page == "Phân loại hàng loạt":
         st.subheader("Phân loại email từ file CSV")
         st.info(
             "File cần có cột `text` hoặc cả hai cột `subject` và `body`. "
-            "Định dạng mã hóa UTF-8. Hệ thống chỉ hỗ trợ email tiếng Anh; "
-            "nội dung tiếng Việt hoặc quá ngắn sẽ được đánh dấu không đủ cơ sở phân loại.",
+            "Định dạng mã hóa UTF-8.",
             icon=None,
         )
 
