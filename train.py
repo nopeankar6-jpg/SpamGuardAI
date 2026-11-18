@@ -33,7 +33,6 @@ def build_pipelines():
         ("clf",   LinearSVC(C=1.0)),
     ])
     return {"nb": nb, "svm": svm}
-
 def main():
     os.makedirs(MODEL_DIR, exist_ok=True)
 
@@ -63,7 +62,6 @@ def main():
         "label_distribution_test":  y_test.value_counts().to_dict(),
         "random_state": RANDOM_STATE,
     }
-
     for name, pipe in pipelines.items():
         print(f"\n[SV2] Đang huấn luyện {name} ...")
         pipe.fit(X_train, y_train)          # TF-IDF chỉ fit trên train
@@ -75,11 +73,9 @@ def main():
             "tfidf_max_features": pipe.named_steps["tfidf"].max_features,
             "n_features_actual": int(len(pipe.named_steps["tfidf"].vocabulary_)),
         }
-
     with open(STATS_PATH, "w", encoding="utf-8") as f:
         json.dump(stats, f, ensure_ascii=False, indent=2)
     print(f"\n[SV2] Đã lưu thống kê -> {STATS_PATH}")
     print("[SV2] HOÀN TẤT HUẤN LUYỆN")
-
 if __name__ == "__main__":
     main()
