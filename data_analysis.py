@@ -1,4 +1,3 @@
-"""Thống kê dữ liệu Spam/Ham và xuất biểu đồ, báo cáo của SV1."""
 from __future__ import annotations
 
 import argparse
@@ -40,7 +39,6 @@ def plot_labels(df: pd.DataFrame, output_path: Path) -> None:
 
 
 def plot_lengths(df: pd.DataFrame, output_path: Path) -> None:
-    """Biểu đồ log10(độ dài + 1) để các email cực dài không che mất phân bố."""
     lengths = df.assign(text_length=df["text"].str.len())
     fig, ax = plt.subplots(figsize=(8, 4.5))
     for label in ("ham", "spam"):
