@@ -1,4 +1,4 @@
-# SpamGuard AI – Phần SV1 
+# SpamGuard AI
 
 ## 1. Cài đặt
 
