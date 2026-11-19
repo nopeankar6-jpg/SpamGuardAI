@@ -1,10 +1,4 @@
-"""Tiền xử lý Apache SpamAssassin Public Corpus cho SpamGuard AI (SV1).
-
-Đọc trực tiếp tập tin .bz2 dạng tar, chấp nhận cả tên .tar.bz2 và _tar.bz2.
-Không tách train/test ở bước này: SV2 thực hiện sau khi loại trùng.
-"""
 from __future__ import annotations
-
 import argparse
 from email import policy
 from email.parser import BytesParser
@@ -14,7 +8,6 @@ import math
 from pathlib import Path
 import re
 import tarfile
-
 import pandas as pd
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -59,10 +52,6 @@ def html_to_text(html: str) -> str:
 
 
 def clean_text(value: object) -> str:
-    """Chuẩn hóa khoảng trắng/ký tự NUL, giữ lại từ, URL và dấu câu.
-
-    Không dùng hàm này để tính TF-IDF hoặc tách tập train/test.
-    """
     if value is None:
         return ""
     if isinstance(value, float) and math.isnan(value):
@@ -73,7 +62,6 @@ def clean_text(value: object) -> str:
 
 
 def prepare_input(subject: str = "", body: str = "") -> str:
-    """Dùng cho email nhập thủ công, nhất quán với cột text ở CSV."""
     normalized_subject = SPAM_PREFIX.sub("", clean_text(subject)).strip()
     return clean_text(f"{normalized_subject} {clean_text(body)}")
 
@@ -99,12 +87,6 @@ def decode_part(part) -> str:
 
 
 def extract_email(raw_email: bytes | str | Path) -> tuple[str, str, str]:
-    """Trích xuất (subject, body, text) từ email định dạng RFC822/.eml.
-
-    raw_email: bytes của một email, văn bản RFC822 hoặc đường dẫn Path tới .eml.
-    Chỉ dùng text/plain, nếu không có thì chuyển text/html thành văn bản;
-    bỏ phần đính kèm để tránh lấy nội dung file ngoài email.
-    """
     if isinstance(raw_email, Path):
         raw_email = raw_email.read_bytes()
     elif isinstance(raw_email, str):
@@ -143,7 +125,6 @@ def label_from_name(filename: str) -> str | None:
 
 
 def load_clean_data(path: str | Path = OUTPUT_FILE) -> pd.DataFrame:
-    """Đọc dữ liệu sạch để SV2 sử dụng. Cột text và label luôn hợp lệ."""
     path = Path(path)
     df = pd.read_csv(path, encoding="utf-8-sig")
     missing = [column for column in COLUMNS if column not in df.columns]
@@ -165,7 +146,7 @@ def process_archives(raw_dir: Path = RAW_DIR, output_path: Path = OUTPUT_FILE,
     raw_dir = Path(raw_dir)
     output_path = Path(output_path)
     stats_path = Path(stats_path)
-    archives = sorted(raw_dir.glob("*.bz2"))  # Nhận cả *_tar.bz2 lẫn *.tar.bz2
+    archives = sorted(raw_dir.glob("*.bz2"))  
     if not archives:
         raise FileNotFoundError(
             f"Không tìm thấy file .bz2 trong {raw_dir}. "
@@ -189,7 +170,7 @@ def process_archives(raw_dir: Path = RAW_DIR, output_path: Path = OUTPUT_FILE,
                         continue
                     status["members_seen"] += 1
                     try:
-                        stream = tar.extractfile(member)  # KHÔNG giải nén xuống ổ đĩa
+                        stream = tar.extractfile(member)  
                         if stream is None:
                             status["skipped_error"] += 1
                             continue
@@ -214,7 +195,6 @@ def process_archives(raw_dir: Path = RAW_DIR, output_path: Path = OUTPUT_FILE,
 
     df = pd.DataFrame(records, columns=COLUMNS)
     before = len(df)
-    # Xóa cả hai nhãn nếu trùng nguyên văn text nhưng khác nhãn.
     unique_labels = df.groupby("text")["label"].nunique()
     conflicts = set(unique_labels[unique_labels > 1].index)
     conflicting_rows = int(df["text"].isin(conflicts).sum())
