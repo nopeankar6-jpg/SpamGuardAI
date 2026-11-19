@@ -69,19 +69,49 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 SV2 phải fit TF-IDF trên train *sau khi chia*, và báo cáo recall/F1 của lớp spam. Không có phần huấn luyện mô hình trong gói SV1 này.
 
-## 5. Chạy giao diện Web (Streamlit - SV3)
+## 5. Hướng dẫn demo giao diện Web (Streamlit - SV3)
 
-Sau khi SV2 huấn luyện và tạo ra các file mô hình trong thư mục `models/` (`naive_bayes.pkl` và `svm.pkl`), khởi chạy ứng dụng web bằng lệnh:
+### Chuẩn bị và khởi chạy
 
-```bash
-python -m streamlit run app.py
-```
+- Cài các thư viện trong `requirements.txt` theo mục 1.
+- Đảm bảo đã có hai mô hình `models/naive_bayes.pkl` và `models/svm.pkl`.
+  - Nếu chưa có mô hình nhưng đã tạo `data/emails_clean.csv`, huấn luyện bằng lệnh `python train.py`.
+- Từ thư mục gốc của dự án, khởi chạy ứng dụng:
 
-Trình duyệt sẽ tự động mở tại địa chỉ `http://localhost:8501`.
+  ```bash
+  python -m streamlit run app.py
+  ```
 
-Các tính năng trên giao diện:
-- **Phân loại đơn lẻ:** Nhập Tiêu đề (Subject) và Nội dung (Body) email, chọn mô hình (Naive Bayes hoặc SVM), bấm **Phân loại** để nhận diện `Spam` hoặc `Ham`.
-- **Phân loại hàng loạt:** Tải lên tệp CSV (yêu cầu cột `text` hoặc cặp cột `subject` và `body`), xem trước dữ liệu, phân loại toàn bộ và tải về tệp kết quả CSV kèm biểu đồ thống kê.
+- Mở địa chỉ `http://localhost:8501` nếu trình duyệt không tự bật.
+- Thanh bên trái có ba mục điều hướng: **Dashboard**, **Phân loại đơn lẻ** và **Phân loại hàng loạt**. Nút bên dưới dùng để đổi giữa chế độ sáng và tối.
+
+### Demo phân loại một email
+
+- Chọn **Phân loại đơn lẻ** ở thanh điều hướng.
+- Nhập tiêu đề vào ô **Tiêu đề email** và nội dung vào ô **Nội dung email**. Có thể mở **Xem ví dụ mẫu** để dùng thử:
+  - Spam: `Congratulations! You WON a FREE iPhone 15` / `Click here NOW to claim your prize: http://bit.ly/xyz`
+  - Ham: `Meeting moved to 3pm tomorrow` / `Hi team, please confirm your availability. Thanks.`
+- Bấm **Phân loại email**. Ứng dụng chạy cả hai mô hình **Naive Bayes** và **SVM**, rồi hiển thị nhãn dự đoán của từng mô hình.
+- Nhãn `SPAM` cho biết email bị nhận diện là thư rác; `HAM` là thư hợp lệ. Nếu nội dung quá ngắn hoặc không hợp lệ, kết quả có thể là `UNKNOWN`.
+- Nếu cả tiêu đề và nội dung đều để trống, giao diện sẽ yêu cầu nhập email trước khi phân loại.
+
+### Demo phân loại nhiều email từ CSV
+
+- Chọn **Phân loại hàng loạt**.
+- Tải lên tệp `.csv` mã hóa UTF-8. Tệp cần có một trong hai định dạng cột:
+  - Cột `text` chứa nội dung email đã ghép; hoặc
+  - Cả hai cột `subject` và `body`.
+- Sau khi tải tệp lên, kiểm tra số dòng đã đọc và phần xem trước dữ liệu.
+- Bấm **Phân loại tất cả** để phân loại từng email bằng cả Naive Bayes và SVM. Giao diện hiển thị tiến độ trong khi xử lý.
+- Xem bảng kết quả, sau đó bấm **Tải kết quả CSV** để lưu kết quả phân loại. Nếu có dòng gặp lỗi, giao diện sẽ thông báo số email bị lỗi.
+- Bấm **Tạo phiên mới** nếu muốn tải một tệp khác và thực hiện lượt phân loại mới.
+
+### Xem dashboard và lịch sử
+
+- Sau khi phân loại hàng loạt, chọn **Dashboard** để xem các phiên đã chạy trong phiên làm việc hiện tại.
+- Chọn một phiên để xem phân bố Spam/Ham, thống kê và so sánh kết quả hai mô hình, cùng bảng chi tiết email.
+- Biểu đồ phân bố có thể chuyển giữa Naive Bayes và SVM; bảng chi tiết hiển thị tối đa 100 email đầu tiên.
+- Bấm **Tải toàn bộ kết quả CSV** để tải toàn bộ dữ liệu của phiên đang xem.
 
 ## 6. Kiểm thử riêng mà không cần email thật
 
